@@ -19,7 +19,7 @@ async function startApolloServer(typeDefs, resolvers){
             const auth = req ?  req.headers.authorization  : null
             if (auth) {
                 const decodedToken = jwt.verify(auth.slice(4), process.env.JWT_SECRET);
-                const user = User.findById(decodedToken.id);
+                const user = await User.findById(decodedToken.id);
                 return { user }
             }
         }

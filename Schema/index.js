@@ -47,7 +47,7 @@ const typeDefs = gql`
      description: String!
      price: Float!
      date: String!
-     creator: User!
+     creator: User
      
     }
 

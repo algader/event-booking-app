@@ -1,12 +1,36 @@
 const User = require('../models/user');
-const { UserInputError} = require('apollo-server-express');
+const { UserInputError, AuthenticationError } = require('apollo-server-express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const Event = require('../models/events');
+const { get } = require('mongoose');
 
 const resolvers = {
     Query: {
-     
+    events: async () => {
+        try {
+            const events = await Event.find({}).populate('creator');
+            return events.map(event => 
+                ({ ...event.toObject(), date: event.date.toDateString() })
+            );
+        } catch (err) {
+            throw err;
+        }
+        },
+
+          getUserEvents: async (_, { userId }) => {
+        try {
+            const events = await Event.find({ creator: userId });
+            return events.map(event => 
+                ({ ...event.toObject(), date: event.date.toDateString() })
+            );
+        } catch (err) {
+            throw err;
+        }
+         
     },
+}, 
+    
     Mutation: {
         createUser: async (_, args) => {
             try{
@@ -45,8 +69,40 @@ const resolvers = {
             userId: user.id,
             token: jwt.sign(userForToken, process.env.JWT_SECRET),
             username: user.username,
-         }         
-    }
-  }
+         }           
+    },
+    createEvent: async (_, args, context) => { 
+        if (!context.user) { 
+            throw new AuthenticationError('يجب تسجيل الدخول  .');
+
+        }
+        const event = new Event({
+            title: args.eventInput.title,
+            description: args.eventInput.description,
+            price: args.eventInput.price,
+            date: new Date(args.eventInput.date),
+            creator: context.user._id
+        });
+        try{
+            await event.save();
+            await event.populate('creator');
+            return event.toObject({ virtuals: true });
+        }catch (err) {
+            throw err;
+     }
+   },
+   deleteEvent: async (_, args) => {
+    try{
+        if (!args.eventId || args.eventId.trim() === '') {
+            throw new UserInputError('Event ID is required and cannot be empty.');
+        }
+        await Event.findByIdAndDelete(args.eventId);
+        const events = await Event.find({}).populate('creator');
+        return events.map(event => event.toObject());
+    } catch (err) {
+        throw err;
+
+  }}
  }
+}
 module.exports = { resolvers };
