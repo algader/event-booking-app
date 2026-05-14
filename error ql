@@ -1,0 +1,27 @@
+Issue summary (14 May 2026)
+
+Observed behavior:
+- GraphQL mutation returned:
+  {
+    "data": {
+      "login": null
+    }
+  }
+
+Actual problem:
+- A stale/older Node server process was still running on port 4000.
+- New runs of `npm start` failed with EADDRINUSE, so the old process continued serving requests.
+- Requests were hitting that old instance, which is why login appeared broken.
+
+How it was confirmed:
+- Checked port 4000 and found an existing Node process.
+- Killed the old process and started the server again.
+- Re-ran the same login mutation; it returned token, username, and userId correctly.
+
+Resolution:
+1) Stop old process on port 4000.
+2) Start server again (`npm start`).
+3) Retry mutation.
+
+Result after fix:
+- `login` returns valid data (not null).
