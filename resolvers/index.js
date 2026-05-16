@@ -3,7 +3,8 @@ const { UserInputError, AuthenticationError } = require('apollo-server-express')
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Event = require('../models/events');
-const { get } = require('mongoose');
+const Booking = require('../models/booking'); 
+
 
 const resolvers = {
     Query: {
@@ -29,6 +30,24 @@ const resolvers = {
         }
          
     },
+    bookings: async (_, __, context) => {
+        if(!context.user){
+            throw new AuthenticationError('يجب تسجيل الدخول  .');
+        } 
+        try {
+            const bookings = await Booking.find({ user: context.user._id })
+                .populate('event')
+                .populate('user');
+            return bookings.map(booking => ({
+                ...booking._doc,
+                createdAt: booking.createdAt.toDateString(),
+                updatedAt: booking.updatedAt.toDateString()
+            }));
+        } catch (err) {
+            throw err;
+
+        }
+    }
 }, 
     
     Mutation: {
@@ -47,7 +66,15 @@ const resolvers = {
                 password: hashedPassword
             });
              const result = await user.save();
-             return { ...result._doc, _id: result._id.toString() };
+             const userForToken = {
+                email: result.email,
+                id: result.id
+             };
+             return {
+                userId: result.id,
+                token: jwt.sign(userForToken, process.env.JWT_SECRET),
+                username: result.username,
+             };
         } catch (err) {
             throw err;
         } 
@@ -102,7 +129,51 @@ const resolvers = {
     } catch (err) {
         throw err;
 
-  }}
+   }
+ },
+  bookEvent: async (_, args, context) => {
+    if (!context.user) { 
+        throw new AuthenticationError('يجب تسجيل الدخول  .');
+    } 
+    const existingBooking = await Booking.findOne({
+        event: args.eventId,
+        user: context.user._id,
+    });
+    if (existingBooking) {
+        throw new UserInputError('لقد قمت بحجز هذا الحدث بالفعل.');
+    }
+
+    const fetchedEvent = await Event.findOne({ _id: args.eventId });
+    const booking = new Booking({
+        user: context.user._id,
+        event: fetchedEvent._id
+    });
+    try {
+        await booking.save();
+        return {
+            ...booking._doc,
+            createdAt: booking.createdAt.toDateString(),
+            updatedAt: booking.updatedAt.toDateString()
+
+        }
+    } catch (err) {
+        throw err;
+    }
+ },
+    cancelBooking: async (_, args, context) => {
+    if (!context.user) {
+        throw new AuthenticationError('يجب تسجيل الدخول  .');
+    }
+    try {
+        const booking = await Booking.findById(args.bookingId).populate('event');
+        const event = { ...booking.event._doc, date: booking.event.date.toDateString() }
+        await Booking.deleteOne({ _id: args.bookingId });
+        return event;
+    } catch (err) {
+        throw err;
+    }
+  }
+
  }
 }
 module.exports = { resolvers };

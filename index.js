@@ -26,13 +26,16 @@ async function startApolloServer(typeDefs, resolvers){
     });
     await server.start();
     server.applyMiddleware({ app }); 
-    await new Promise(resolve => httpServer.listen({ port: process.env.PORT }, resolve));
-    console.log(`Server ready at http://localhost:${process.env.PORT}${server.graphqlPath}`);
     await mongoose.connect(process.env.DB_URL, {
         serverSelectionTimeoutMS: 5000,
     });
     console.log('Connected to MongoDB');
+    await new Promise(resolve => httpServer.listen({ port: process.env.PORT }, resolve));
+    console.log(`Server ready at http://localhost:${process.env.PORT}${server.graphqlPath}`);
     return { server, app };
 }
 
-startApolloServer(typeDefs, resolvers);
+startApolloServer(typeDefs, resolvers).catch((err) => {
+    console.error('Failed to start server:', err.message);
+    process.exit(1);
+});
