@@ -90,6 +90,51 @@ h2{
   padding-top: 2%;
 }
 
+.login-form {
+  width: 32rem;
+  max-width: 78%;
+  margin-top: 2.2rem;
+  border: 3px solid #cc6600;
+  border-radius: 0;
+  padding: 1.6rem 1.8rem;
+  background: #ffffff;
+}
+
+.login-form .form-control {
+  border: none;
+  margin: 0 0 1.25rem 0;
+  padding: 0;
+}
+
+.login-form .form-control label {
+  display: block;
+  margin-bottom: 0.45rem;
+  text-align: right;
+  color: #4b5b70;
+  font-size: 1.05rem;
+}
+
+.login-form .form-control input {
+  width: 100%;
+  background: #e8eef6;
+  border: 1px solid #d5dde8;
+  border-radius: 0.3rem;
+  font-size: 1.05rem;
+  color: #2d4663;
+  padding: 0.55rem 0.75rem;
+}
+
+.login-form .form-actions {
+  text-align: right;
+  margin-top: 0.25rem;
+}
+
+.login-form .form-actions .btn {
+  border-radius: 0.35rem;
+  font-size: 1rem;
+  padding: 0.45rem 1rem;
+}
+
 .events-control {
   border: 1px solid #cc6600;
   margin: 2rem auto;
